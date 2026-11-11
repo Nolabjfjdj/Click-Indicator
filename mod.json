@@ -18,6 +18,12 @@
             "name": "Enable Click Indicator",
             "default": true
         },
+        "recording": {
+            "type": "bool",
+            "name": "Record Clicks",
+            "description": "Records player 1 press and release timings during a level.",
+            "default": false
+        },
         "right_side": {
             "type": "bool",
             "name": "Place indicator on the right",
