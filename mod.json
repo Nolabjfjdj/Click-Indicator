@@ -17,6 +17,12 @@
             "type": "bool",
             "name": "Enable Click Indicator",
             "default": true
+        },
+        "right_side": {
+            "type": "bool",
+            "name": "Place indicator on the right",
+            "description": "When enabled, the indicator appears on the right side of the screen.",
+            "default": false
         }
     }
 }
