@@ -223,19 +223,6 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
         return true;
     }
 
-    void update(float dt) {
-        PlayLayer::update(dt);
-
-        if (Mod::get()->getSettingValue<bool>("playback") &&
-            !Mod::get()->getSettingValue<bool>("recording")) {
-            auto indicator = this->getChildByTag(415);
-            if (!playbackUpdateDiagnosticLogged) {
-                playbackUpdateDiagnosticLogged = true;
-                log::info("Playback diagnostic: PlayLayer update reached, timer={} ms, indicatorFound={}, recorded={}", this->getPlayTimerMilli(), indicator != nullptr, recordedClicks.size());
-            }
-            updatePlaybackIndicator(indicator, this->getPlayTimerMilli());
-        }
-    }
 };
 
 $on_mod(Loaded) {
@@ -243,6 +230,20 @@ $on_mod(Loaded) {
 }
 
 class $modify(ClickIndicatorInputLayer, GJBaseGameLayer) {
+    void update(float dt) {
+        GJBaseGameLayer::update(dt);
+
+        if (Mod::get()->getSettingValue<bool>("playback") &&
+            !Mod::get()->getSettingValue<bool>("recording")) {
+            auto indicator = this->getChildByTag(415);
+            if (!playbackUpdateDiagnosticLogged) {
+                playbackUpdateDiagnosticLogged = true;
+                log::info("Playback diagnostic: GJBaseGameLayer update reached, timer={} ms, indicatorFound={}, recorded={}", this->getPlayTimerMilli(), indicator != nullptr, recordedClicks.size());
+            }
+            updatePlaybackIndicator(indicator, this->getPlayTimerMilli());
+        }
+    }
+
     void handleButton(bool down, int button, bool isPlayer1) {
         if (button == 1 && isPlayer1) {
             auto now = this->getPlayTimerMilli();
