@@ -2,6 +2,7 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <algorithm>
+#include <string>
 #include <vector>
 
 using namespace geode::prelude;
@@ -14,6 +15,7 @@ namespace {
 
     std::vector<ClickEvent> recordedClicks;
     int activePressStart = -1;
+    std::string activeRecordingKey;
 
     constexpr float indicatorWidth = 34.f;
     constexpr float indicatorHeight = 180.f;
@@ -22,6 +24,58 @@ namespace {
 
     CCLayerColor* makeRect(ccColor4B color, float width, float height) {
         return CCLayerColor::create(color, width, height);
+    }
+
+    std::string makeRecordingKey(int levelID) {
+        return "click-recording-" + std::to_string(levelID);
+    }
+
+    void saveRecordedClicks() {
+        if (activeRecordingKey.empty()) {
+            return;
+        }
+
+        std::string data;
+        for (auto const& click : recordedClicks) {
+            if (!data.empty()) {
+                data += ";";
+            }
+            data += std::to_string(click.start);
+            data += ",";
+            data += std::to_string(click.duration);
+        }
+
+        Mod::get()->setSavedValue<std::string>(activeRecordingKey, data);
+    }
+
+    void loadRecordedClicks(std::string const& key) {
+        recordedClicks.clear();
+        activeRecordingKey = key;
+        auto data = Mod::get()->getSavedValue<std::string>(key, "");
+
+        size_t position = 0;
+        while (position < data.size()) {
+            auto separator = data.find(';', position);
+            auto item = data.substr(position, separator == std::string::npos ? std::string::npos : separator - position);
+            auto comma = item.find(',');
+            if (comma != std::string::npos) {
+                try {
+                    auto start = std::stoi(item.substr(0, comma));
+                    auto duration = std::stoi(item.substr(comma + 1));
+                    if (start >= 0 && duration >= 0) {
+                        recordedClicks.push_back({start, duration});
+                    }
+                }
+                catch (...) {
+                }
+            }
+            if (separator == std::string::npos) {
+                break;
+            }
+            position = separator + 1;
+        }
+
+        log::info("Loaded {} recorded clicks for playback", recordedClicks.size());
     }
 
     CCNode* createClickIndicator(bool playbackEnabled) {
@@ -114,11 +168,23 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
             return false;
         }
 
-        recordedClicks.clear();
         activePressStart = -1;
-
         auto recordingEnabled = Mod::get()->getSettingValue<bool>("recording");
         auto playbackEnabled = Mod::get()->getSettingValue<bool>("playback");
+        auto recordingKey = makeRecordingKey(level->m_levelID);
+
+        if (recordingEnabled) {
+            recordedClicks.clear();
+            activeRecordingKey = recordingKey;
+            saveRecordedClicks();
+        }
+        else if (playbackEnabled) {
+            loadRecordedClicks(recordingKey);
+        }
+        else {
+            recordedClicks.clear();
+            activeRecordingKey = recordingKey;
+        }
 
         log::info("Click recording is {}", recordingEnabled ? "ENABLED" : "DISABLED");
         log::info("Click playback is {}", playbackEnabled ? "ENABLED" : "DISABLED");
@@ -167,6 +233,7 @@ class $modify(ClickIndicatorInputLayer, GJBaseGameLayer) {
                 auto duration = now - activePressStart;
                 if (duration >= 0) {
                     recordedClicks.push_back({activePressStart, duration});
+                    saveRecordedClicks();
                     log::info("RECORDED CLICK #{}: start={} ms, duration={} ms", recordedClicks.size(), activePressStart, duration);
                 }
                 activePressStart = -1;
