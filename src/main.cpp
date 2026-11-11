@@ -16,6 +16,7 @@ namespace {
     std::vector<ClickEvent> recordedClicks;
     int activePressStart = -1;
     std::string activeRecordingKey;
+    bool playbackDiagnosticLogged = false;
 
     constexpr float indicatorWidth = 34.f;
     constexpr float indicatorHeight = 180.f;
@@ -133,6 +134,14 @@ namespace {
             return;
         }
 
+        if (!playbackDiagnosticLogged) {
+            playbackDiagnosticLogged = true;
+            log::info("Playback diagnostic: timer={} ms, recorded={}, indicator={}, firstBar={}", now, recordedClicks.size(), indicator != nullptr, indicator->getChildByTag(600) != nullptr);
+            if (!recordedClicks.empty()) {
+                log::info("Playback diagnostic: firstClick={} ms, delta={} ms", recordedClicks.front().start, recordedClicks.front().start - now);
+            }
+        }
+
         int barIndex = 0;
         for (auto const& click : recordedClicks) {
             auto delta = click.start - now;
@@ -147,8 +156,12 @@ namespace {
             auto bar = indicator->getChildByTag(600 + barIndex);
             if (bar) {
                 auto y = indicatorHeight - 6.f - static_cast<float>(delta) * playbackPixelsPerMs;
+                auto visible = y >= 4.f && y <= indicatorHeight - 7.f;
                 bar->setPosition({4.f, y});
-                bar->setVisible(y >= 4.f && y <= indicatorHeight - 7.f);
+                bar->setVisible(visible);
+                if (barIndex == 0 && playbackDiagnosticLogged) {
+                    log::info("Playback diagnostic: nextClick={} ms, delta={} ms, y={}, visible={}", click.start, delta, y, visible);
+                }
             }
             barIndex++;
         }
