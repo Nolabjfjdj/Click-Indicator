@@ -18,6 +18,7 @@ namespace {
     std::string activeRecordingKey;
     bool playbackDiagnosticLogged = false;
     bool playbackBarDiagnosticLogged = false;
+    bool playbackUpdateDiagnosticLogged = false;
 
     constexpr float indicatorWidth = 34.f;
     constexpr float indicatorHeight = 180.f;
@@ -211,6 +212,7 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         auto indicator = createClickIndicator(playbackEnabled);
         indicator->setTag(415);
+        log::info("Playback diagnostic: indicator created, playback={}, bars={}", playbackEnabled, playbackEnabled ? visiblePlaybackBars : 0);
         auto rightSide = Mod::get()->getSettingValue<bool>("right_side");
         indicator->setPosition({
             rightSide ? winSize.width - 62.f : 28.f,
@@ -226,7 +228,12 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
 
         if (Mod::get()->getSettingValue<bool>("playback") &&
             !Mod::get()->getSettingValue<bool>("recording")) {
-            updatePlaybackIndicator(this->getChildByTag(415), this->getPlayTimerMilli());
+            auto indicator = this->getChildByTag(415);
+            if (!playbackUpdateDiagnosticLogged) {
+                playbackUpdateDiagnosticLogged = true;
+                log::info("Playback diagnostic: PlayLayer update reached, timer={} ms, indicatorFound={}, recorded={}", this->getPlayTimerMilli(), indicator != nullptr, recordedClicks.size());
+            }
+            updatePlaybackIndicator(indicator, this->getPlayTimerMilli());
         }
     }
 };
