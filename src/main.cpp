@@ -2,6 +2,8 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <algorithm>
+#include <cstdlib>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -24,6 +26,7 @@ namespace {
     constexpr float indicatorHeight = 180.f;
     constexpr float playbackPixelsPerMs = 0.09f;
     constexpr int visiblePlaybackBars = 16;
+    constexpr int correctClickToleranceMs = 50;
 
     CCLayerColor* makeRect(ccColor4B color, float width, float height) {
         return CCLayerColor::create(color, width, height);
@@ -157,9 +160,11 @@ namespace {
 
             auto bar = indicator->getChildByTag(600 + barIndex);
             if (bar) {
-                auto y = indicatorHeight - 6.f - static_cast<float>(delta) * playbackPixelsPerMs;
-                auto visible = y >= 4.f && y <= indicatorHeight - 7.f;
-                bar->setPosition({4.f, y});
+                auto barHeight = std::clamp(static_cast<float>(click.duration) * playbackPixelsPerMs, 7.f, indicatorHeight - 12.f);
+                auto y = 6.f + static_cast<float>(delta) * playbackPixelsPerMs + barHeight / 2.f;
+                auto visible = y - barHeight / 2.f <= indicatorHeight - 4.f && y + barHeight / 2.f >= 4.f;
+                bar->setContentSize({26.f, barHeight});
+                bar->setPosition({17.f, y});
                 bar->setVisible(visible);
                 if (barIndex == 0 && !playbackBarDiagnosticLogged) {
                     playbackBarDiagnosticLogged = true;
@@ -268,7 +273,18 @@ class $modify(ClickIndicatorInputLayer, GJBaseGameLayer) {
             if (indicator) {
                 auto timingBar = static_cast<CCLayerColor*>(indicator->getChildByTag(416));
                 if (timingBar) {
+                    bool correctTiming = false;
+                    if (Mod::get()->getSettingValue<bool>("playback") && !recordedClicks.empty()) {
+                        auto now = this->getPlayTimerMilli();
+                        auto closestDelta = std::numeric_limits<int>::max();
+                        for (auto const& click : recordedClicks) {
+                            auto delta = std::abs(click.start - now);
+                            closestDelta = std::min(closestDelta, delta);
+                        }
+                        correctTiming = closestDelta <= correctClickToleranceMs;
+                    }
                     timingBar->stopAllActions();
+                    timingBar->setColor(correctTiming ? ccColor3B{45, 235, 105} : ccColor3B{255, 55, 65});
                     timingBar->setOpacity(255);
                     timingBar->runAction(CCFadeTo::create(0.18f, 70));
                 }
