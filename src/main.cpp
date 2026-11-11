@@ -72,6 +72,9 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
         recordedClicks.clear();
         activePressStart = -1;
 
+        auto recordingEnabled = Mod::get()->getSettingValue<bool>("recording");
+        log::info("Click recording is {}", recordingEnabled ? "ENABLED" : "DISABLED");
+
         if (!Mod::get()->getSettingValue<bool>("enabled")) {
             return true;
         }
@@ -101,12 +104,13 @@ class $modify(ClickIndicatorInputLayer, GJBaseGameLayer) {
 
             if (down && Mod::get()->getSettingValue<bool>("recording") && activePressStart < 0) {
                 activePressStart = now;
+                log::info("Recording click press at {} ms", activePressStart);
             }
             else if (!down && activePressStart >= 0) {
                 auto duration = now - activePressStart;
                 if (duration >= 0) {
                     recordedClicks.push_back({activePressStart, duration});
-                    log::info("Recorded click #{} at {} ms, held for {} ms", recordedClicks.size(), activePressStart, duration);
+                    log::info("RECORDED CLICK #{}: start={} ms, duration={} ms", recordedClicks.size(), activePressStart, duration);
                 }
                 activePressStart = -1;
             }
