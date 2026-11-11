@@ -268,25 +268,30 @@ class $modify(ClickIndicatorInputLayer, GJBaseGameLayer) {
             }
         }
 
-        if (down && button == 1) {
+        if (button == 1) {
             auto indicator = this->getChildByTag(415);
             if (indicator) {
                 auto timingBar = static_cast<CCLayerColor*>(indicator->getChildByTag(416));
                 if (timingBar) {
-                    bool correctTiming = false;
-                    if (Mod::get()->getSettingValue<bool>("playback") && !recordedClicks.empty()) {
-                        auto now = this->getPlayTimerMilli();
-                        auto closestDelta = std::numeric_limits<int>::max();
-                        for (auto const& click : recordedClicks) {
-                            auto delta = std::abs(click.start - now);
-                            closestDelta = std::min(closestDelta, delta);
+                    if (down) {
+                        bool correctTiming = false;
+                        if (Mod::get()->getSettingValue<bool>("playback") && !recordedClicks.empty()) {
+                            auto now = this->getPlayTimerMilli();
+                            auto closestDelta = std::numeric_limits<int>::max();
+                            for (auto const& click : recordedClicks) {
+                                auto delta = std::abs(click.start - now);
+                                closestDelta = std::min(closestDelta, delta);
+                            }
+                            correctTiming = closestDelta <= correctClickToleranceMs;
                         }
-                        correctTiming = closestDelta <= correctClickToleranceMs;
+                        timingBar->stopAllActions();
+                        timingBar->setColor(correctTiming ? ccColor3B{45, 235, 105} : ccColor3B{255, 55, 65});
+                        timingBar->setOpacity(255);
                     }
-                    timingBar->stopAllActions();
-                    timingBar->setColor(correctTiming ? ccColor3B{45, 235, 105} : ccColor3B{255, 55, 65});
-                    timingBar->setOpacity(255);
-                    timingBar->runAction(CCFadeTo::create(0.18f, 70));
+                    else {
+                        timingBar->stopAllActions();
+                        timingBar->runAction(CCFadeTo::create(0.18f, 70));
+                    }
                 }
             }
         }
