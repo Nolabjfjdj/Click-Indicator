@@ -29,6 +29,12 @@
             "name": "Place indicator on the right",
             "description": "When enabled, the indicator appears on the right side of the screen.",
             "default": false
+        },
+        "playback": {
+            "type": "bool",
+            "name": "Playback Clicks",
+            "description": "Shows recorded future click timings on the indicator.",
+            "default": false
         }
     }
 }
