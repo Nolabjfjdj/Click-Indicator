@@ -1,10 +1,19 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
+#include <vector>
 
 using namespace geode::prelude;
 
 namespace {
+    struct ClickEvent {
+        int start;
+        int duration;
+    };
+
+    std::vector<ClickEvent> recordedClicks;
+    int activePressStart = -1;
+
     CCLayerColor* makeRect(ccColor4B color, float width, float height) {
         return CCLayerColor::create(color, width, height);
     }
@@ -60,6 +69,9 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
             return false;
         }
 
+        recordedClicks.clear();
+        activePressStart = -1;
+
         if (!Mod::get()->getSettingValue<bool>("enabled")) {
             return true;
         }
@@ -82,9 +94,24 @@ $on_mod(Loaded) {
     log::info("Click Indicator loaded");
 }
 
-
 class $modify(ClickIndicatorInputLayer, GJBaseGameLayer) {
     void handleButton(bool down, int button, bool isPlayer1) {
+        if (button == 1 && isPlayer1) {
+            auto now = this->getPlayTimerMilli();
+
+            if (down && Mod::get()->getSettingValue<bool>("recording") && activePressStart < 0) {
+                activePressStart = now;
+            }
+            else if (!down && activePressStart >= 0) {
+                auto duration = now - activePressStart;
+                if (duration >= 0) {
+                    recordedClicks.push_back({activePressStart, duration});
+                    log::info("Recorded click #{} at {} ms, held for {} ms", recordedClicks.size(), activePressStart, duration);
+                }
+                activePressStart = -1;
+            }
+        }
+
         if (down && button == 1) {
             auto indicator = this->getChildByTag(415);
             if (indicator) {
