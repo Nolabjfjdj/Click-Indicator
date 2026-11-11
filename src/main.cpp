@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
+#include <Geode/modify/GJBaseGameLayer.hpp>
 
 using namespace geode::prelude;
 
@@ -45,6 +46,7 @@ namespace {
         root->addChild(rungThree);
 
         auto timingBar = makeRect({255, 55, 65, 255}, 48.f, 7.f);
+        timingBar->setTag(416);
         timingBar->setPosition({-7.f, -5.f});
         root->addChild(timingBar);
 
@@ -64,6 +66,7 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         auto indicator = createClickIndicator();
+        indicator->setTag(415);
         auto rightSide = Mod::get()->getSettingValue<bool>("right_side");
         indicator->setPosition({
             rightSide ? winSize.width - 62.f : 28.f,
@@ -78,3 +81,22 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
 $on_mod(Loaded) {
     log::info("Click Indicator loaded");
 }
+
+
+class $modify(ClickIndicatorInputLayer, GJBaseGameLayer) {
+    void handleButton(bool down, int button, bool isPlayer1) {
+        if (down && button == 1) {
+            auto indicator = this->getChildByTag(415);
+            if (indicator) {
+                auto timingBar = static_cast<CCLayerColor*>(indicator->getChildByTag(416));
+                if (timingBar) {
+                    timingBar->stopAllActions();
+                    timingBar->setOpacity(255);
+                    timingBar->runAction(CCFadeTo::create(0.18f, 70));
+                }
+            }
+        }
+
+        GJBaseGameLayer::handleButton(down, button, isPlayer1);
+    }
+};
