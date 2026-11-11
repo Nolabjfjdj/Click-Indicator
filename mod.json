@@ -1,0 +1,22 @@
+{
+    "geode": "5.11.2",
+    "gd": {
+        "ios": "2.2081"
+    },
+    "version": "1.0.0",
+    "id": "nolabjfjdj.click_indicator",
+    "name": "Click Indicator",
+    "developer": "Nolabjfjdj",
+    "description": "A visual indicator for click timing in Geometry Dash.",
+    "tags": [
+        "gameplay",
+        "enhancement"
+    ],
+    "settings": {
+        "enabled": {
+            "type": "bool",
+            "name": "Enable Click Indicator",
+            "default": true
+        }
+    }
+}
