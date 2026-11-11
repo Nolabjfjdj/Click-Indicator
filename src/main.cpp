@@ -17,6 +17,7 @@ namespace {
     int activePressStart = -1;
     std::string activeRecordingKey;
     bool playbackDiagnosticLogged = false;
+    bool playbackBarDiagnosticLogged = false;
 
     constexpr float indicatorWidth = 34.f;
     constexpr float indicatorHeight = 180.f;
@@ -159,7 +160,8 @@ namespace {
                 auto visible = y >= 4.f && y <= indicatorHeight - 7.f;
                 bar->setPosition({4.f, y});
                 bar->setVisible(visible);
-                if (barIndex == 0 && playbackDiagnosticLogged) {
+                if (barIndex == 0 && !playbackBarDiagnosticLogged) {
+                    playbackBarDiagnosticLogged = true;
                     log::info("Playback diagnostic: nextClick={} ms, delta={} ms, y={}, visible={}", click.start, delta, y, visible);
                 }
             }
