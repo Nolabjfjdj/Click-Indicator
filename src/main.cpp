@@ -64,8 +64,9 @@ class $modify(ClickIndicatorPlayLayer, PlayLayer) {
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         auto indicator = createClickIndicator();
+        auto rightSide = Mod::get()->getSettingValue<bool>("right_side");
         indicator->setPosition({
-            winSize.width - 62.f,
+            rightSide ? winSize.width - 62.f : 28.f,
             (winSize.height - 180.f) / 2.f
         });
         this->addChild(indicator, 9999);
