@@ -119,7 +119,7 @@ namespace {
 
         auto timingBar = makeRect({255, 55, 65, 255}, 48.f, 7.f);
         timingBar->setTag(416);
-        timingBar->setPosition({-7.f, -5.f});
+        timingBar->setPosition({-7.f, 4.f});
         root->addChild(timingBar);
 
         if (playbackEnabled) {
@@ -150,7 +150,7 @@ namespace {
         int barIndex = 0;
         for (auto const& click : recordedClicks) {
             auto delta = click.start - now;
-            if (delta < 0 || delta > 1900) {
+            if (delta < -click.duration || delta > 1900) {
                 continue;
             }
 
@@ -161,10 +161,10 @@ namespace {
             auto bar = indicator->getChildByTag(600 + barIndex);
             if (bar) {
                 auto barHeight = std::clamp(static_cast<float>(click.duration) * playbackPixelsPerMs, 7.f, indicatorHeight - 12.f);
-                auto y = 6.f + static_cast<float>(delta) * playbackPixelsPerMs + barHeight / 2.f;
-                auto visible = y - barHeight / 2.f <= indicatorHeight - 4.f && y + barHeight / 2.f >= 4.f;
+                auto y = 4.f + static_cast<float>(delta) * playbackPixelsPerMs;
+                auto visible = y <= indicatorHeight - 4.f && y + barHeight >= 4.f;
                 bar->setContentSize({26.f, barHeight});
-                bar->setPosition({17.f, y});
+                bar->setPosition({4.f, y});
                 bar->setVisible(visible);
                 if (barIndex == 0 && !playbackBarDiagnosticLogged) {
                     playbackBarDiagnosticLogged = true;
